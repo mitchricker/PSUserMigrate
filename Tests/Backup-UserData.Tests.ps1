@@ -1,10 +1,13 @@
+# Load any test helpers
 . "$PSScriptRoot\TestHelpers.ps1"
 
-Describe "Backup-UserData" {
+# Import the module under test
+BeforeAll {
+    # Adjust the path if your module is located elsewhere
+    Import-Module "$PSScriptRoot\..\PSUserMigrate.psm1" -Force
+}
 
-    BeforeAll {
-        Import-TestModule
-    }
+Describe "Backup-UserData" {
 
     Context "Parameter Validation" {
 
@@ -15,7 +18,6 @@ Describe "Backup-UserData" {
         It "Accepts SecureString password" {
             $pw = ConvertTo-SecureString "test" -AsPlainText -Force
             Mock Compress-Archive {}
-
             { Backup-UserData -Path "x.zip" -Encrypt:$false -Password $pw } | Should -Not -Throw
         }
     }
@@ -24,11 +26,12 @@ Describe "Backup-UserData" {
 
         BeforeEach {
             Mock Compress-Archive {}
-            Mock -CommandName Test-7Zip -ModuleName PSUserMigrate { "C:\Program Files\7-Zip\7z.exe" }
-            Mock -CommandName ConvertTo-PlainText -ModuleName PSUserMigrate { "plaintext" }
+            Mock Test-7Zip { "C:\Program Files\7-Zip\7z.exe" }
+            Mock ConvertTo-PlainText { "plaintext" }
             Mock netsh {}
             Mock Get-VpnConnection { @() }
             Mock Get-Printer { @() }
+            Mock New-Item { @{ FullName = "C:\temp\test" } }
         }
 
         It "Calls Compress-Archive when not encrypted" {
@@ -38,7 +41,6 @@ Describe "Backup-UserData" {
 
         It "Calls 7zip when encryption enabled" {
             $pw = ConvertTo-SecureString "test" -AsPlainText -Force
-
             Backup-UserData -Path "test.zip" -Encrypt -Password $pw
 
             Assert-MockCalled -CommandName Test-7Zip -ModuleName PSUserMigrate -Exactly 1
@@ -46,10 +48,7 @@ Describe "Backup-UserData" {
         }
 
         It "Creates working directory" {
-            Mock New-Item { return @{ FullName = "C:\temp\test" } }
-
             Backup-UserData -Path "test.zip"
-
             Assert-MockCalled New-Item -Times 1
         }
     }
