@@ -12,7 +12,7 @@ function Write-Log {
     Add-Content -Path $logFile -Value $entry
 
     switch ($Level) {
-        "Info"  { Write-Host $Message -ForegroundColor Cyan }
+        "Info" { Write-Verbose $Message }
         "Warn"  { Write-Warning $Message }
         "Error" { Write-Error $Message }
     }

@@ -3,7 +3,6 @@
 Describe "Backup-UserData" {
 
     BeforeAll {
-        . "$PSScriptRoot\TestHelpers.ps1"
         Import-TestModule
     }
 
@@ -25,8 +24,8 @@ Describe "Backup-UserData" {
 
         BeforeEach {
             Mock Compress-Archive {}
-            Mock Test-7Zip { "C:\Program Files\7-Zip\7z.exe" }
-            Mock ConvertTo-PlainText { "plaintext" }
+            Mock -CommandName Test-7Zip -ModuleName PSUserMigrate { "C:\Program Files\7-Zip\7z.exe" }
+            Mock -CommandName ConvertTo-PlainText -ModuleName PSUserMigrate { "plaintext" }
             Mock netsh {}
             Mock Get-VpnConnection { @() }
             Mock Get-Printer { @() }
@@ -34,7 +33,6 @@ Describe "Backup-UserData" {
 
         It "Calls Compress-Archive when not encrypted" {
             Backup-UserData -Path "test.zip"
-
             Assert-MockCalled Compress-Archive -Times 1
         }
 
@@ -43,8 +41,8 @@ Describe "Backup-UserData" {
 
             Backup-UserData -Path "test.zip" -Encrypt -Password $pw
 
-            Assert-MockCalled Test-7Zip -Times 1
-            Assert-MockCalled ConvertTo-PlainText -Times 1
+            Assert-MockCalled -CommandName Test-7Zip -ModuleName PSUserMigrate -Exactly 1
+            Assert-MockCalled -CommandName ConvertTo-PlainText -ModuleName PSUserMigrate -Exactly 1
         }
 
         It "Creates working directory" {
@@ -60,21 +58,15 @@ Describe "Backup-UserData" {
 
         It "Creates a zip file" {
             $path = New-TestZipPath
-
             Backup-UserData -Path $path
-
             Test-Path $path | Should -BeTrue
-
             Remove-Item $path -Force
         }
 
         It "Creates non-empty archive" {
             $path = New-TestZipPath
-
             Backup-UserData -Path $path
-
             (Get-Item $path).Length | Should -BeGreaterThan 0
-
             Remove-Item $path -Force
         }
     }
@@ -88,8 +80,7 @@ Describe "Backup-UserData" {
 
         It "Only processes selected components" {
             Backup-UserData -Path "test.zip" -Include @("WiFi")
-
-            Assert-MockCalled netsh -TimesGreaterThan 0
+            Assert-MockCalled netsh -AtLeast 1
         }
     }
 }

@@ -3,10 +3,20 @@ $ModuleRoot = Resolve-Path "$PSScriptRoot\.."
 $ModulePath = Join-Path $ModuleRoot "PSUserMigrate.psm1"
 
 function Import-TestModule {
-    Remove-Module PSUserMigrate -ErrorAction SilentlyContinue
+    <#
+    .SYNOPSIS
+        Imports the PSUserMigrate module for testing, removing any existing version first.
+    #>
+    if (Get-Module PSUserMigrate) {
+        Remove-Module PSUserMigrate -ErrorAction SilentlyContinue
+    }
     Import-Module $ModulePath -Force
 }
 
 function New-TestZipPath {
-    return Join-Path $env:TEMP ("test-" + [guid]::NewGuid() + ".zip")
+    <#
+    .SYNOPSIS
+        Returns a unique temporary zip path for tests.
+    #>
+    Join-Path $env:TEMP ("test-" + [guid]::NewGuid() + ".zip")
 }

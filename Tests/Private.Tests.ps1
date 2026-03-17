@@ -2,7 +2,7 @@
 
 Describe "Private Functions" {
 
-        BeforeAll {
+    BeforeAll {
         . "$PSScriptRoot\TestHelpers.ps1"
         Import-TestModule
     }
@@ -19,6 +19,12 @@ Describe "Private Functions" {
     }
 
     Context "Test-7Zip" {
+
+        BeforeEach {
+            # Clear previous mocks to avoid interference
+            Remove-Mock -CommandName Test-Path -ErrorAction SilentlyContinue
+            Remove-Mock -CommandName Get-Command -ErrorAction SilentlyContinue
+        }
 
         It "Returns path if 7zip exists" {
             Mock Test-Path { $true }
@@ -37,6 +43,12 @@ Describe "Private Functions" {
     }
 
     Context "Write-Log" {
+
+        BeforeEach {
+            # Remove any existing log before each test
+            $log = "$env:TEMP\UserMigration.log"
+            if (Test-Path $log) { Remove-Item $log -Force }
+        }
 
         It "Writes log file" {
             $log = "$env:TEMP\UserMigration.log"
